@@ -1,0 +1,244 @@
+\documentclass[]{scrartcl}
+
+\usepackage{amsthm}
+\usepackage{amssymb} %for mathbb
+\usepackage{mathtools} %for coloneqq
+
+\usepackage{enumitem}   
+
+\usepackage[ngerman]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{hyperref}
+
+\newtheorem{theo}{Theorem}[section]
+
+\theoremstyle{plain}
+\newtheorem{satz}[theo]{Satz}
+\newtheorem{kor}[theo]{Korollar}
+\newtheorem{lem}[theo]{Lemma}
+\newtheorem{prop}[theo]{Proposition}
+\newtheorem{defn}[theo]{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{bsp}{Beispiel}
+\newtheorem*{bem}{Bemerkung}
+
+\newcommand{\satzautorefname}{Satz}
+\newcommand{\propautorefname}{Proposition}
+\newcommand{\lemautorefname}{Lemma}
+\newcommand{\defnautorefname}{De\-fi\-ni\-tion}
+\newcommand{\korautorefname}{Korollar}
+\newcommand{\theoautorefname}{}
+
+\newcommand{\lZ}{l^2(\mathbb{Z})}
+\newcommand{\lR}{L^2(\mathbb{R})}
+
+\title{Wavelets}
+\author{Jan Kandyba}
+\date{10. Mai 2022}
+
+\begin{document}
+    \maketitle
+    %\tableofcontents
+
+    \section{Signale und Filter}
+
+    \begin{defn}[Signalraum]
+        $x = \{ x_n \}_{n \in \mathbb{Z}} \subset \mathbb{C}$ ist ein diskretes Signal.
+        Wir verwenden die Energienorm für Signale:
+        $$||x|| = (\sum_{k \in \mathbb{Z}} |x_k|)^{1/2}$$
+        Im folgenden werden wir nur Signale mit endlicher Energie betrachten. Dafür definieren wir uns den Raum
+        $$l^2(\mathbb{Z}) \coloneqq \{x: \mathbb{Z} \to \mathbb{C} : ||x|| < \infty\}$$
+    \end{defn}
+
+    \begin{bem}
+        Wir bilden auf $\mathbb{C}$ ab, da wir eine Frequenz in der Form von $r \cdot e^{i\omega}$, mit $r$ die Amplitude und $\omega$ die Frequenz darstellen.
+    \end{bem}
+
+    Um mit diesen Signalen zu arbeiten, definieren wir uns \emph{Filter} als Abbildungen von $l^2(\mathbb{Z})$ auf sich selber, mit der Notation $y = Hx, \: H: l^2(\mathbb{Z}) \to l^2(\mathbb{Z})$
+
+    \begin{bsp}
+        Ein Besipiel für einen linearen Filter (s. u.) ist der sogenannte \emph{Delay-Operator}, definiert durch
+        $$y = D^nx \Leftrightarrow y_k = x_{k-n}$$
+    \end{bsp}
+
+    \begin{defn}
+        Ein Filter $H$ ist \emph{LTI} (Linear, time invariant), falls
+        \begin{enumerate}[label=(\roman*)]
+            \item $H(x + y) = Hx + Hy$
+            \item $H(ax) = aHx \: $
+            \item $H(Dx) = D(Hx) \: $
+        \end{enumerate}
+    \end{defn}
+
+    \begin{bem}
+        Für einen LTI-Filter $H$ gilt $H(D^nx)=D^n(Hx)$
+    \end{bem}
+
+    Eine wichtiges Signal ist das sogenannte \emph{Impulssignal}:
+    $$\delta_k \coloneqq
+    \begin{cases}
+        1, &falls \: k=0\\
+        0, &sonst    
+    \end{cases} 
+    $$
+
+    Ein beliebiges zeitdisretes Signal lässt sich durch das Impulssignal ausdrücken:
+    $$x = \sum_n x_n D^n \delta$$
+
+    Für ein LTI-Filter definieren wir uns die \emph{Impusantwort} $h \coloneqq H\delta$
+
+    Wenden wir nun einen LTI-Filter $H$ auf $x$ an, bekommen wir folgene Umformung:
+
+    \begin{align*}
+        y = Hx \Leftrightarrow y &= H(\sum_n x_n D^n \delta) = \sum_n x_n H (D^n \delta) \\
+            &= \sum_n x_n D^n h \coloneqq h * x
+    \end{align*}
+
+    Mit $*$ als Definition einer Faltung, da mit einsetzen folgendes gilt:
+
+    $$y = h*x \Leftrightarrow y_k = \sum_n x_n h_{k-n}$$
+
+    Damit können wir jeden LTI-Filter durch eine Folge als seine Impulsantwort definieren.
+
+    % TODO: Beispiele
+
+    % \begin{defn}
+    %     Wir definieren uns die z-Transformation für ein zeitdirskretes Signal $x$:
+
+    %     $$X(z) \coloneqq \sum_k x_k z^{-k}, z \in \mathbb{C}$$
+
+    %     Notation: $x \supset X(z)$
+    % \end{defn}
+
+    % \begin{lem} Es gilt:
+    %     \begin{enumerate}
+    %         \item $x \supset X(z) \Leftrightarrow D^n x \supset z^{-n}X(z)$
+    %         \item $x^* \supset X(z) \Leftrightarrow x^* \supset X(z^{-1})$, mit 
+    %         $x_k^* \coloneqq x_{-k}$
+    %     \end{enumerate}
+    % \end{lem}
+
+    % TODO: Fourier?
+
+    \section{Multiskalenanalyse}
+
+    Nun verstetigen wir den Begriff des Signals, und betrachten nun funktionen.
+
+    \begin{defn} Der Raum, indem alle unsere Signale enthalten sind ist
+        $$
+        L^2(\mathbb{R}) \coloneqq \{f: \mathbb{R} \to \mathbb{C}:
+        \int_{-\infty}^\infty |f|^2 \, dt < \infty\}
+        $$
+        mit der Norm
+
+        $$||f|| = (\int_{-\infty}^\infty |f|^2 \, dt)^{1/2}$$
+
+        und des daraus induzierten Skalarproduktes
+
+        $$\langle f, g \rangle \coloneqq \int_{-\infty}^\infty f \overline{g} \, dt$$
+    \end{defn}
+
+    Unser Ziel ist es nun eine numerisch Stabile Basis des unendlich-dimensionalen Vektorraumes $L^2(\mathbb{R})$ zu konstruieren. Dazu definieren wir den Begriff der Riesz-Basis.
+
+    \begin{defn}
+        $\{\varphi_k\}_k$ eine Basis von $V \subset \lR$ eine Riesz-Basis, falls 
+        $\exists A, B \in \mathbb{R}$, mit
+        $$f = \sum_k c_k \varphi_k \Rightarrow A ||f||^2 \le \sum_k |c_k|^2 \le B ||f||^2$$
+    \end{defn}
+
+    \begin{bem}
+        Für eine Approximation $\tilde{f} = \sum_k \tilde{c_k} \varphi_k$ für $f = \sum_k c_k \varphi_k$ gilt:
+        $$A||f-\tilde{f}||^2 \le \sum_k c_k - \tilde{c_k} \le B ||f - \tilde{f}||^2$$
+        Somit folgen für kleine Fehler in der Approximation auch kleine Fehler in den Koeffizienten.  
+    \end{bem}
+
+    Nun führen wir die Multiskalenanalyse ein:
+
+    \begin{defn}
+        Eine Familie von Unterräumen $\{V_j\}_{j \in \mathbb{Z}}$ von $\lR$  heißt \emph{Multiskalenanalyse} (MSA), falls
+
+        \begin{enumerate}[label=(\roman*)]
+            \item $V_j \subset V_{j+1} \: \forall \: j \in \mathbb{Z}$ \label{MSA:i}
+            \item $f(t) \in V_j \Leftrightarrow f(2t) \in V_{j+1} \: \forall \: j \in \mathbb{Z}$ \label{MSA:ii}
+            \item $\bigcup_j V_j$ dicht in $L^2(\mathbb{R})$ \label{MSA:iii}
+            \item $\bigcap_j V_j = \{ 0 \}$ 
+            \item Es existiert eine Skalierungsfunktion $\varphi \in V_0$, mit $\{\varphi (t - k)\}_{k \in \mathbb{Z}}$ Orthonormalbasis von $V_0$, mit 
+            $\int_\mathbb{R} \varphi(t) \, dt = 1$ \label{MSA:v}
+        \end{enumerate}
+    \end{defn}
+
+    Mit \autoref{MSA:ii} folgt, dass für ein $V_j$ die Familie $\{\varphi_{j,k}\}_k$ eine Basis bildet, mit $$\varphi_{j,k} (t) \coloneqq 2^{j/k} \varphi(2^j t - k)$$
+
+    \begin{bem}
+        Der Vorfaktor von $2^{j/k}$ ist notwendig, damit 
+        $||\varphi_{j,k}|| = ||\varphi||$ gilt.
+    \end{bem}
+
+    Die Multiskalenanalyse ist also eine Familie von Detailräumen. Mit jedem weiteren Index werden die Signale besser approximiert. Durch \autoref{MSA:iii} bekommen wir später im Grenzübergang eine Basis von $\lR$.
+
+    Mit \autoref{MSA:i} folgt, dass $\varphi \in V_1$. Damit ist $\varphi$ auch folgendermaßen darstellbar:
+    $$\varphi(t) = 2 \sum_k h_k \varphi(2t - k)$$
+    Durch Anwendung der kontinuierlichen Fouriertransformation bekommen wir mit den üblichen Rechenregeln:
+    \begin{align*}
+        \hat{\varphi}(\omega) &= 2 \sum_k h_k \mathcal{F} \varphi(2t - k) \\
+                            &= 2 (\sum_k h_k e^{-i \frac{\omega}{2}k}) \cdot \hat{\varphi}(\frac{\omega}{2}) \frac{1}{2} \\
+                            &= H(\frac{\omega}{2}) \hat{\varphi}(\frac{\omega}{2})
+    \end{align*} mit $H(\omega) \coloneqq \sum_k h_k e^{i\omega k}$
+    
+    Mit \autoref{MSA:v} folgt auch $\hat{\varphi}(0) = 1$, und damit $H(0) = \sum_k h_k = 1$. Man kann auch mit der Orthogonalität der Basen zeigen, dass $\{\varphi_{j,k}\}_k$ auch $H(\pi) = 0$ gelten muss. Damit wäre $H$ ein Tiefpaßfilter.
+
+    \begin{lem}[Allgemeine Skallierungsgleichung]
+        Es gilt \label{lem:Skal}
+        $$\varphi_{j,k} = \sqrt{2} \sum_l h_l \varphi_{j+1, l+2k}$$
+    \end{lem}
+
+    \begin{proof} Per Definition gilt:
+        \begin{align*}
+            \varphi_{j, k} (t) &= 2^{j/2} \varphi(2^j t - k) \\
+            &\stackrel{\autoref{lem:Skal}}{=} 2 \cdot 2^{j/2} \sum_l h_l \varphi(2^{j+1} t -2k -l) \\
+            &= \sqrt{2} \sum_l h_l \varphi_{j+1, l + 2k}
+        \end{align*}
+    \end{proof}
+
+    \section{Wavelets}
+
+    Nun definieren wir uns die Komplementärräume zu einer MSA.
+
+    \begin{defn}
+        Für $\{V_j\}_j$ eine MSA ist $\psi$ ein Wavelet, falls $\psi(t-k)$ eine Orthonormalbasis von $W_0$, mit $W_0$ der Komplementärraum von $V_0$ in $V_1$, also $V_1 = V_0 \oplus W_0$. Außerdem soll gelten 
+        \begin{equation}
+            \int_{-\infty}^\infty \psi(t) \, dt = 0 \label{eq:wav}
+        \end{equation}
+    \end{defn}
+
+    Analog definieren wir uns
+    $$\psi_{j, k}(t) \coloneqq 2^{j/2} \psi(2^j t - k)$$
+    Auch hier gilt, dass $\{\psi_{j,k}\}_k$ eine Basis von $W_j$ ist.
+    Damit gilt, dass $\psi \in V_1$, mit
+    $$\psi (t) = 2 \sum_k g_k \varphi (2t - k)$$
+    Analog zu oben folgern wir 
+    $$\hat{\psi} (\omega) = G(\frac{\omega}{2}) \hat{\varphi}(\frac{\omega}{2})$$
+    mit
+    $$G(\omega) = \sum_k g_k e^{-ik\omega}$$
+    Durch \autoref{eq:wav} folgt $\hat{\psi}(0) = 1 \: \hat{\varphi}(0) = 0$, und damit $G(0) = \sum_k g_k = 0$. Durch die Orthogonalität kann man auch hier zeigen, dass $G(1) = 1$. Damit ist $G$ ein Hochpaßfilter.
+
+    \section{Die Fast Forward Wavelet Transformation}
+
+    Ziel dieser Transformation ist es bei gegebener Detailschärfer (hier Koeffizienten aus einem Raum $V_j$) die Koeffizienten aus den gröberen Räumen zu berechnen.
+    Hierbei nehmen wir als Koeffizienten die Projektion einer funktion $f \in \lR$ auf den Raum $V_j+1$, also mit $s_{j+1, k} = \langle f, \varphi_{j + 1, k}\rangle$:
+    $$\sum_k s_{j+1, k} \varphi_{j+1, k} = \sum_k s_{j,k} \varphi_{j,k} + \sum_k \omega_{j, k} \psi_{j, k}$$
+    Durch Skallarmultiplikation auf beiden Seiten bekommen wir für ein $l \in \mathbb{Z}$ fix.:
+    \begin{align*}
+        \sum_k s_{j+1, k} \langle \varphi_{j+1, k}, \varphi_{j, l} \rangle &= \sum_k s_{j,k} \langle \varphi_{j,k}, \varphi_{j, l} \rangle + \sum_k \omega_{j, k} \langle \psi_{j, k}, \varphi_{j, l} \rangle \\
+        s_{j, l} &= \sum_k s_{j+1, k} \langle \varphi_{j+1, k}, \varphi_{j, l} \rangle 
+    \end{align*}
+
+    Durch $\varphi_{j,k} = \sqrt{2} \sum_l h_l \varphi_{j+1, l+2k}$ folgt:
+    $$\langle \varphi_{j+1, l}, \varphi_{j, k} \rangle = \sqrt{2} \sum_m h_m \langle \varphi_{j+1, l}, \varphi_{j+1, m + 2k} \rangle = \sqrt{2} h_{l-2k}$$
+
+    Somit gilt:
+    $$s_{j, k} = \sqrt{2} \sum_l s_{j+1, l} h_{l - 2k}$$
+\end{document}
