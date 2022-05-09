@@ -5,6 +5,8 @@
 \usepackage{mathtools} %for coloneqq
 
 \usepackage{enumitem}   
+\usepackage{pgfplots}
+\pgfplotsset{compat = newest}
 
 \usepackage[ngerman]{babel}
 \usepackage[T1]{fontenc}
@@ -43,6 +45,38 @@
     \maketitle
     %\tableofcontents
 
+    \section{Haar Wavelet}
+
+    Wir versuchen eine gegebene Funktion zu approximieren. Zuerst durch eine Skallierungsfunktion $\varphi$, dann durch ein \emph{Wavelet} $\psi$.
+    Nehmen wir folgende Funktionen:
+    $$\varphi(t) = 
+    \begin{cases}
+        1, &falls \: t \in [0, 1)\\
+        0, &sonst    
+    \end{cases},
+    \psi(t) = 
+    \begin{cases}
+        1, &falls \: t \in [0, \frac{1}{2})\\
+        -1, &falls \: t \in [\frac{1}{2}, 1) \\
+        0, &sonst    
+    \end{cases} 
+    $$
+
+    Nun können wir eine beliebige Funktion $f$ durch Verschiebungen und Skallierungen der Funktion $\phi$ darstellen. Dabei betrachen wir einen Approximationsfall $j$, indem wir die approximierende Funktion durch die Mittelwerte, konstant jeweils auf einem Abschnitt von $2^{-j+1}$.
+
+    \begin{figure}
+        \centering
+        \begin{tikzpicture}[scale=0.75]
+            \begin{axis}[samples=100,
+                xmin = 0, xmax = 1.5,
+                ymin = 0, ymax = 2.0]
+                \addplot[] {x^2};
+                \addplot[const plot] coordinates {(0,0.125) (0.5,0.625) (1,1.625) (2,1.625)};
+            \end{axis}
+        \end{tikzpicture}
+        \caption{Approximation von $x^2$ durch eine Treppenfunktion}
+    \end{figure}
+
     \section{Signale und Filter}
 
     \begin{defn}[Signalraum]
@@ -54,7 +88,7 @@
     \end{defn}
 
     \begin{bem}
-        Wir bilden auf $\mathbb{C}$ ab, da wir eine Frequenz in der Form von $r \cdot e^{i\omega}$, mit $r$ die Amplitude und $\omega$ die Frequenz darstellen.
+        Wir bilden auf $\mathbb{C}$ ab, da wir eine Frequenz in der Form von $r \cdot e^{i\omega x}$, mit $r$ die Amplitude und $\omega$ die Frequenz darstellen.
     \end{bem}
 
     Um mit diesen Signalen zu arbeiten, definieren wir uns \emph{Filter} als Abbildungen von $l^2(\mathbb{Z})$ auf sich selber, mit der Notation $y = Hx, \: H: l^2(\mathbb{Z}) \to l^2(\mathbb{Z})$
@@ -103,27 +137,64 @@
 
     Damit können wir jeden LTI-Filter durch eine Folge als seine Impulsantwort definieren.
 
-    % TODO: Beispiele
+    \begin{defn}
+        Die zeitdiskrete Fouriertransformation für ein zeitdirkretes Signal $x$:
+        $$X(\omega) = \sum_{k=-\infty}^{\infty}x_k e^{-i\omega k}$$
+    \end{defn}
 
-    % \begin{defn}
-    %     Wir definieren uns die z-Transformation für ein zeitdirskretes Signal $x$:
+    Die Fouriertransformation der Impulsantwort eines LTI-Filters heißt Frequenzantwort. 
+    Für den Fall einer konstanten Frequenz als Eingabe, $x_k = e^{i \omega k}$ mit $|\omega| \le \pi$ gilt:
 
-    %     $$X(z) \coloneqq \sum_k x_k z^{-k}, z \in \mathbb{C}$$
+    \begin{align*}
+        y_k &= \sum_n h_n x_{k-n} = \sum_n h_n e^{i \omega (k - n)} \\
+        &= e^{i \omega k} \sum_n h_n e^{-i \omega n} = e^{i \omega k} H(\omega)
+    \end{align*}
 
-    %     Notation: $x \supset X(z)$
-    % \end{defn}
+    Mit der Schreibweise $H(\omega) = |H(\omega)|e^{i \phi(\omega)}$ folgt
+    $$y_k = |H(\omega)|e^{i(\omega k + \phi(\omega))}$$
+    Somit ist die Ausgabe auch eine reine Frequenz, mit der Amplitude $|H(\omega)|$, und der Phasenverschiebung $-\phi(\omega)$. Die Fouriertransformation beschreibt somit durch den Betrag $H(\omega)$, inwiefern der Filter $H$ die Frequenz $\omega$ beeinflusst.
 
-    % \begin{lem} Es gilt:
-    %     \begin{enumerate}
-    %         \item $x \supset X(z) \Leftrightarrow D^n x \supset z^{-n}X(z)$
-    %         \item $x^* \supset X(z) \Leftrightarrow x^* \supset X(z^{-1})$, mit 
-    %         $x_k^* \coloneqq x_{-k}$
-    %     \end{enumerate}
-    % \end{lem}
+    Für den Mittelungsfilter
+    $$h_k =
+    \begin{cases}
+        1/2, &falls \: k=0,1 \\
+        0, &sonst
+    \end{cases},
+    y_k = \sum_n h_n x_{k-n} = \frac{x_k + x_{k-1}}{2}
+    $$
+    gilt $|H(\omega)| = \cos(\frac{\omega}{2}), \: |\omega| < \pi$. Wie auf \autoref{pic:Four} zu sehen, werden hohe Frequenzen mit einem Faktor von fast 0 multipliziert, wohingegen niedrige Frequenzen mit einem Faktor nahe 1 skalliert werden. So einen Filter nennen wir \emph{Tiefpaßfilter}. Bei einem gegensätzlichen Verlauf sprechen wir von einem \emph{Hochpaßfilter}.
+    
+    \begin{figure}
+        \centering
+        \begin{tikzpicture}[scale=0.75]
+            \begin{axis}[samples = 100,
+                xmin = 0, xmax = 3.3,
+                ymin = 0, ymax = 1.0]
+                \addplot[] {cos(deg(x/2))};
+            \end{axis}
+        \end{tikzpicture}
+    \caption{Die Frequenzantwort des Mittelungsfilters \label{pic:Four}}
+    \end{figure}
 
-    % TODO: Fourier?
 
     \section{Multiskalenanalyse}
+
+    Zuerst einigen wir uns auf die folgende Fouriertransformation:
+    $$\hat{f}(\omega) = \int_\infty^\infty f(t) e^{-i \omega t} \, dt$$
+
+    Unser Ziel ist es nun eine numerisch Stabile Basis des unendlich-dimensionalen Vektorraumes $L^2(\mathbb{R})$ zu konstruieren. Dazu definieren wir den Begriff der Riesz-Basis.
+
+    \begin{defn}
+        $\{\varphi_k\}_k$ eine Basis von $V \subset \lR$ eine Riesz-Basis, falls 
+        $\exists A, B \in \mathbb{R}$, mit
+        $$f = \sum_k c_k \varphi_k \Rightarrow A ||f||^2 \le \sum_k |c_k|^2 \le B ||f||^2$$
+    \end{defn}
+
+    \begin{bem}
+        Für eine Approximation $\tilde{f} = \sum_k \tilde{c_k} \varphi_k$ für $f = \sum_k c_k \varphi_k$ gilt:
+        $$A||f-\tilde{f}||^2 \le \sum_k c_k - \tilde{c_k} \le B ||f - \tilde{f}||^2$$
+        Somit folgen für kleine Fehler in der Approximation auch kleine Fehler in den Koeffizienten.  
+    \end{bem}
 
     Nun verstetigen wir den Begriff des Signals, und betrachten nun funktionen.
 
@@ -141,20 +212,6 @@
         $$\langle f, g \rangle \coloneqq \int_{-\infty}^\infty f \overline{g} \, dt$$
     \end{defn}
 
-    Unser Ziel ist es nun eine numerisch Stabile Basis des unendlich-dimensionalen Vektorraumes $L^2(\mathbb{R})$ zu konstruieren. Dazu definieren wir den Begriff der Riesz-Basis.
-
-    \begin{defn}
-        $\{\varphi_k\}_k$ eine Basis von $V \subset \lR$ eine Riesz-Basis, falls 
-        $\exists A, B \in \mathbb{R}$, mit
-        $$f = \sum_k c_k \varphi_k \Rightarrow A ||f||^2 \le \sum_k |c_k|^2 \le B ||f||^2$$
-    \end{defn}
-
-    \begin{bem}
-        Für eine Approximation $\tilde{f} = \sum_k \tilde{c_k} \varphi_k$ für $f = \sum_k c_k \varphi_k$ gilt:
-        $$A||f-\tilde{f}||^2 \le \sum_k c_k - \tilde{c_k} \le B ||f - \tilde{f}||^2$$
-        Somit folgen für kleine Fehler in der Approximation auch kleine Fehler in den Koeffizienten.  
-    \end{bem}
-
     Nun führen wir die Multiskalenanalyse ein:
 
     \begin{defn}
@@ -165,7 +222,7 @@
             \item $f(t) \in V_j \Leftrightarrow f(2t) \in V_{j+1} \: \forall \: j \in \mathbb{Z}$ \label{MSA:ii}
             \item $\bigcup_j V_j$ dicht in $L^2(\mathbb{R})$ \label{MSA:iii}
             \item $\bigcap_j V_j = \{ 0 \}$ 
-            \item Es existiert eine Skalierungsfunktion $\varphi \in V_0$, mit $\{\varphi (t - k)\}_{k \in \mathbb{Z}}$ Orthonormalbasis von $V_0$, mit 
+            \item Es existiert eine Skalierungsfunktion $\varphi \in V_0$, mit $\{\varphi (t - k)\}_{k \in \mathbb{Z}}$ Orthonormalbasis, Riesz-Basis von $V_0$, mit 
             $\int_\mathbb{R} \varphi(t) \, dt = 1$ \label{MSA:v}
         \end{enumerate}
     \end{defn}
@@ -208,7 +265,7 @@
     Nun definieren wir uns die Komplementärräume zu einer MSA.
 
     \begin{defn}
-        Für $\{V_j\}_j$ eine MSA ist $\psi$ ein Wavelet, falls $\psi(t-k)$ eine Orthonormalbasis von $W_0$, mit $W_0$ der Komplementärraum von $V_0$ in $V_1$, also $V_1 = V_0 \oplus W_0$. Außerdem soll gelten 
+        Für $\{V_j\}_j$ eine MSA ist $\psi$ ein Wavelet, falls $\psi(t-k)$ eine Orthonormalbasis, Riesz-Basis von $W_0$, mit $W_0$ der Komplementärraum von $V_0$ in $V_1$, also $V_1 = V_0 \oplus W_0$. Außerdem soll gelten 
         \begin{equation}
             \int_{-\infty}^\infty \psi(t) \, dt = 0 \label{eq:wav}
         \end{equation}
@@ -241,4 +298,9 @@
 
     Somit gilt:
     $$s_{j, k} = \sqrt{2} \sum_l s_{j+1, l} h_{l - 2k}$$
-\end{document}
+
+    \begin{thebibliography}{99}
+        \bibitem{texbook}
+        Jöran Bergh, Fredrik Ekstedt, Martin Lindberg (1999) Wavelets mit Anwendungen in Signal- und Bildverarbeitung
+    \end{thebibliography}
+    \end{document}
